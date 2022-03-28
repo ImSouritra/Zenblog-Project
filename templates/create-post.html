@@ -1,0 +1,13 @@
+{% extends 'bootstrap/base.html' %}
+{% import 'bootstrap/wtf.html' as wtf %}
+{% block content %}
+{% include 'header.html' %}
+
+    <section class="post-form">
+    {{ckeditor.load()}}
+    {{ckeditor.config(name='body')}}
+{{ wtf.quick_form(form,novalidate=true,button_map={"submit":"primary"})}}
+        </section>
+
+{% include 'footer.html' %}
+{% endblock %}
