@@ -10,7 +10,7 @@
               <div class="swiper-wrapper">
                 {% for post in recent_posts %}
                 <div class="swiper-slide">
-                  <a href="{{url_for('show_post',id=post.id)}}" class="img-bg d-flex align-items-end" style="background-image: url('{{post.image}}');">
+                  <a href="{{url_for('show_post',post_id=post.id)}}" class="img-bg d-flex align-items-end" style="background-image: url('{{post.image}}');">
                     <div class="img-bg-inner">
                       <h2>{{post.title}}</h2>
                       <p>{{post.subtitle}}</p>

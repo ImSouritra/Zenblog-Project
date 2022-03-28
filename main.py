@@ -137,12 +137,11 @@ def logout():
     return redirect(url_for("home"))
 
 
-@app.route('/show-post',methods=["GET","POST"])
-def show_post():
-    post_id = request.args.get('id')
+@app.route('/show-post/<int:post_id>',methods=["GET","POST"])
+def show_post(post_id):
     post = BlogPost.query.get(post_id)
     if request.method=="POST":
-        new_comment=Comment(author_id=current_user.id,blog_id=post_id,comment=request.form.get("comment"))
+        new_comment=Comment(author_id=current_user.id,comment=request.form.get("comment"),related_blog=post)
         db.session.add(new_comment)
         db.session.commit()
     return render_template("single-post.html",post=post)
@@ -162,13 +161,12 @@ def make_post():
         new_blog = BlogPost(title=title,subtitle=subtitle,date=current_date ,image=image,category=category,author_id=current_user.id,body=body)
         db.session.add(new_blog)
         db.session.commit()
-        return redirect(url_for('show_post',id=new_blog.id))
+        return redirect(url_for('show_post',post_id=new_blog.id))
     return render_template("create-post.html",form=form)
 
-@app.route('/edit-post',methods=["GET","POST"])
+@app.route('/edit-post/<post_id>',methods=["GET","POST"])
 @admin_only
-def edit_post():
-    post_id = request.args.get("id")
+def edit_post(post_id):
     selected_post = BlogPost.query.get(post_id)
     form = CreatePostForm(title=selected_post.title,subtitle=selected_post.subtitle,img_url=selected_post.image,body=selected_post.body,category=selected_post.category,)
     if request.method=="POST":
@@ -178,12 +176,11 @@ def edit_post():
         selected_post.image = form.img_url.data
         selected_post.body = form.body.data
         db.session.commit()
-        return redirect(url_for("show_post",id=selected_post.id))
+        return redirect(url_for("show_post",post_id=selected_post.id))
     return render_template("create-post.html",form=form)
 
-@app.route('/delete-post',methods=["GET","POST"])
-def delete_post():
-    post_id = request.args.get('id')
+@app.route('/delete-post/<post_id>',methods=["GET","POST"])
+def delete_post(post_id):
     selected_post = BlogPost.query.get(post_id)
     db.session.delete(selected_post)
     db.session.commit()
