@@ -86,7 +86,9 @@ if not os.path.isfile("sqlite:///blog.db"):
 @app.route('/')
 def home():
     all_posts = db.session.query(BlogPost).all()
-    return render_template("index.html", posts=all_posts)
+    recent_posts = BlogPost.query.order_by(BlogPost.id).all()[::-1][:4]
+    trending_posts = BlogPost.query.order_by(BlogPost.date).all()
+    return render_template("index.html",recent_posts = recent_posts,trending_posts=trending_posts )
 
 
 @app.route('/login', methods=["GET", "POST"])
@@ -135,10 +137,14 @@ def logout():
     return redirect(url_for("home"))
 
 
-@app.route('/show-post')
+@app.route('/show-post',methods=["GET","POST"])
 def show_post():
-    post_id = request.args.get("id")
+    post_id = request.args.get('id')
     post = BlogPost.query.get(post_id)
+    if request.method=="POST":
+        new_comment=Comment(author_id=current_user.id,blog_id=post_id,comment=request.form.get("comment"))
+        db.session.add(new_comment)
+        db.session.commit()
     return render_template("single-post.html",post=post)
 
 
@@ -159,8 +165,29 @@ def make_post():
         return redirect(url_for('show_post',id=new_blog.id))
     return render_template("create-post.html",form=form)
 
+@app.route('/edit-post',methods=["GET","POST"])
+@admin_only
+def edit_post():
+    post_id = request.args.get("id")
+    selected_post = BlogPost.query.get(post_id)
+    form = CreatePostForm(title=selected_post.title,subtitle=selected_post.subtitle,img_url=selected_post.image,body=selected_post.body,category=selected_post.category,)
+    if request.method=="POST":
+        selected_post.title=form.title.data
+        selected_post.subtitle=form.subtitle.data
+        selected_post.category = form.category.data
+        selected_post.image = form.img_url.data
+        selected_post.body = form.body.data
+        db.session.commit()
+        return redirect(url_for("show_post",id=selected_post.id))
+    return render_template("create-post.html",form=form)
 
-
+@app.route('/delete-post',methods=["GET","POST"])
+def delete_post():
+    post_id = request.args.get('id')
+    selected_post = BlogPost.query.get(post_id)
+    db.session.delete(selected_post)
+    db.session.commit()
+    return redirect(url_for('home'))
 
 if __name__ == "__main__":
     app.run(debug=True)
