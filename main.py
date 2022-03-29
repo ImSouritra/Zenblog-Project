@@ -140,11 +140,15 @@ def logout():
 @app.route('/show-post/<int:post_id>',methods=["GET","POST"])
 def show_post(post_id):
     post = BlogPost.query.get(post_id)
+    comment_length = len(post.comments)
     if request.method=="POST":
+        if not current_user.is_authenticated:
+            flash("Cannot post comment without logging in!")
+            return redirect(url_for('show_post',post_id=post_id))
         new_comment=Comment(author_id=current_user.id,comment=request.form.get("comment"),related_blog=post)
         db.session.add(new_comment)
         db.session.commit()
-    return render_template("single-post.html",post=post)
+    return render_template("single-post.html",post=post,comment_length = comment_length)
 
 
 @app.route('/create-post',methods=["GET","POST"])
@@ -180,11 +184,21 @@ def edit_post(post_id):
     return render_template("create-post.html",form=form)
 
 @app.route('/delete-post/<post_id>',methods=["GET","POST"])
+@admin_only
 def delete_post(post_id):
     selected_post = BlogPost.query.get(post_id)
     db.session.delete(selected_post)
     db.session.commit()
     return redirect(url_for('home'))
 
+
+@app.route('/delete-comment/<post_id>',methods=["GET","POST"])
+@admin_only
+def delete_comment(post_id):
+    comment_id = request.args.get("comment_id")
+    comment = Comment.query.get(comment_id)
+    db.session.delete(comment)
+    db.session.commit()
+    return redirect(url_for('show_post',post_id=post_id))
 if __name__ == "__main__":
     app.run(debug=True)
